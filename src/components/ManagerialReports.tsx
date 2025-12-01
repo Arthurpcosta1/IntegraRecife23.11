@@ -832,18 +832,11 @@ export const ManagerialReports: React.FC<ManagerialReportsProps> = ({ events }) 
                       <span>CSV (.csv)</span>
                     </div>
                   </SelectItem>
-                  <SelectItem value="pdf">
-                    <div className="flex items-center gap-2">
-                      <FileText className="h-4 w-4 text-red-600" />
-                      <span>PDF (.pdf)</span>
-                    </div>
-                  </SelectItem>
                 </SelectContent>
               </Select>
               <p className="text-xs text-muted-foreground">
                 {exportFormat === 'xlsx' && '📊 Recomendado: Inclui múltiplas abas e formatação avançada'}
                 {exportFormat === 'csv' && '📄 Simples: Compatível com qualquer planilha'}
-                {exportFormat === 'pdf' && '📑 Visual: Melhor para impressão (em breve)'}
               </p>
             </div>
 

@@ -21,12 +21,33 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
   const [userType, setUserType] = useState<'admin' | 'cidadao'>('cidadao');
   const [loading, setLoading] = useState(false);
   const [interesses, setInteresses] = useState<string[]>([]);
+  const [passwordError, setPasswordError] = useState('');
   const [formData, setFormData] = useState({
     name: '',
     email: '',
     password: '',
     confirmPassword: ''
   });
+
+  // Validar força da senha
+  const validatePassword = (password: string): string => {
+    if (password.length < 8) {
+      return 'A senha deve ter no mínimo 8 caracteres';
+    }
+    if (!/[A-Z]/.test(password)) {
+      return 'A senha deve conter pelo menos uma letra maiúscula';
+    }
+    if (!/[a-z]/.test(password)) {
+      return 'A senha deve conter pelo menos uma letra minúscula';
+    }
+    if (!/[0-9]/.test(password)) {
+      return 'A senha deve conter pelo menos um número';
+    }
+    if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
+      return 'A senha deve conter pelo menos um caractere especial (!@#$%^&*()_+-=[]{};\':"\\|,.<>/?)';
+    }
+    return '';
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -38,6 +59,14 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
 
     if (!isLogin) {
       // Cadastro
+      // Validar senha
+      const passwordValidation = validatePassword(formData.password);
+      if (passwordValidation) {
+        setPasswordError(passwordValidation);
+        alert(passwordValidation);
+        return;
+      }
+
       if (formData.password !== formData.confirmPassword) {
         alert('As senhas não coincidem!');
         return;
@@ -245,6 +274,49 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
                 onChange={handleChange}
                 required
               />
+              {!isLogin && formData.password && (
+                <div className="password-requirements" style={{
+                  marginTop: '8px',
+                  padding: '10px',
+                  background: 'var(--card-bg-color)',
+                  borderRadius: '8px',
+                  fontSize: '0.85rem'
+                }}>
+                  <div style={{ marginBottom: '6px', fontWeight: '600', color: 'var(--primary-color)' }}>
+                    Requisitos da senha:
+                  </div>
+                  <div style={{ 
+                    color: formData.password.length >= 8 ? '#4a920f' : 'var(--primary-color)', 
+                    opacity: formData.password.length >= 8 ? 1 : 0.6 
+                  }}>
+                    {formData.password.length >= 8 ? '✓' : '○'} Mínimo 8 caracteres
+                  </div>
+                  <div style={{ 
+                    color: /[A-Z]/.test(formData.password) ? '#4a920f' : 'var(--primary-color)', 
+                    opacity: /[A-Z]/.test(formData.password) ? 1 : 0.6 
+                  }}>
+                    {/[A-Z]/.test(formData.password) ? '✓' : '○'} Letra maiúscula
+                  </div>
+                  <div style={{ 
+                    color: /[a-z]/.test(formData.password) ? '#4a920f' : 'var(--primary-color)', 
+                    opacity: /[a-z]/.test(formData.password) ? 1 : 0.6 
+                  }}>
+                    {/[a-z]/.test(formData.password) ? '✓' : '○'} Letra minúscula
+                  </div>
+                  <div style={{ 
+                    color: /[0-9]/.test(formData.password) ? '#4a920f' : 'var(--primary-color)', 
+                    opacity: /[0-9]/.test(formData.password) ? 1 : 0.6 
+                  }}>
+                    {/[0-9]/.test(formData.password) ? '✓' : '○'} Número
+                  </div>
+                  <div style={{ 
+                    color: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(formData.password) ? '#4a920f' : 'var(--primary-color)', 
+                    opacity: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(formData.password) ? 1 : 0.6 
+                  }}>
+                    {/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(formData.password) ? '✓' : '○'} Caractere especial (!@#$%...)
+                  </div>
+                </div>
+              )}
             </div>
 
             {!isLogin && (

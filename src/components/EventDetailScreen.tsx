@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Calendar, Clock, MapPin, Share2, Star, ArrowLeft, Navigation } from 'lucide-react';
+import { Calendar, Clock, MapPin, Share2, Star, ArrowLeft, Navigation, UserPlus, Check } from 'lucide-react';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { supabase } from '../utils/supabase/client';
 import { ShareEventDialog } from './ShareEventDialog';
+import { toast } from 'sonner@2.0.3';
 
 interface EventDetailScreenProps {
   event: {
@@ -21,18 +22,32 @@ interface EventDetailScreenProps {
   onBack: () => void;
   onRate: (eventId: number, eventName: string) => void;
   onRatingAdded?: () => void; // Callback para recarregar avaliações
+  userId?: string; // ID do usuário logado
 }
 
-export const EventDetailScreen: React.FC<EventDetailScreenProps> = ({ event, onBack, onRate, onRatingAdded }) => {
+export const EventDetailScreen: React.FC<EventDetailScreenProps> = ({ event, onBack, onRate, onRatingAdded, userId }) => {
   const [rating, setRating] = useState(0);
   const [reviewCount, setReviewCount] = useState(0);
   const [avaliacoes, setAvaliacoes] = useState<any[]>([]);
   const [showShareDialog, setShowShareDialog] = useState(false);
+  
+  // Estados para inscrição
+  const [isSubscribed, setIsSubscribed] = useState(false);
+  const [isLoadingSubscription, setIsLoadingSubscription] = useState(true);
 
   // Carregar avaliações do banco de dados
   useEffect(() => {
     loadRatings();
   }, [event.id]);
+
+  // Verificar se usuário está inscrito no evento
+  useEffect(() => {
+    if (userId) {
+      checkSubscription();
+    } else {
+      setIsLoadingSubscription(false);
+    }
+  }, [event.id, userId]);
 
   // Expor função para recarregar avaliações
   useEffect(() => {
@@ -50,7 +65,12 @@ export const EventDetailScreen: React.FC<EventDetailScreenProps> = ({ event, onB
       
       const { data, error } = await supabase
         .from('avaliacoes')
-        .select('*')
+        .select(`
+          *,
+          usuarios!avaliacoes_usuario_id_fkey (
+            nome
+          )
+        `)
         .eq('evento_id', event.id);
 
       if (error) {
@@ -82,6 +102,41 @@ export const EventDetailScreen: React.FC<EventDetailScreenProps> = ({ event, onB
     }
   };
 
+  const checkSubscription = async () => {
+    try {
+      console.log('🔍 Verificando inscrição para evento:', event.id);
+      
+      const { data, error } = await supabase
+        .from('inscricoes')
+        .select('*')
+        .eq('evento_id', event.id)
+        .eq('usuario_id', userId);
+
+      if (error) {
+        console.error('❌ Erro ao verificar inscrição:', error);
+        setIsSubscribed(false);
+        setIsLoadingSubscription(false);
+        return;
+      }
+
+      console.log('📊 Inscrições encontradas:', data?.length || 0);
+
+      if (data && data.length > 0) {
+        console.log('✅ Usuário está inscrito no evento');
+        setIsSubscribed(true);
+        setIsLoadingSubscription(false);
+      } else {
+        console.log('ℹ️ Usuário não está inscrito no evento');
+        setIsSubscribed(false);
+        setIsLoadingSubscription(false);
+      }
+    } catch (error) {
+      console.error('❌ Erro ao verificar inscrição:', error);
+      setIsSubscribed(false);
+      setIsLoadingSubscription(false);
+    }
+  };
+
   const renderStars = (rating: number) => {
     const stars = [];
     for (let i = 1; i <= 5; i++) {
@@ -95,6 +150,88 @@ export const EventDetailScreen: React.FC<EventDetailScreenProps> = ({ event, onB
       );
     }
     return stars;
+  };
+
+  // Função para abrir Google Maps com a localização do evento
+  const handleOpenMaps = () => {
+    const address = encodeURIComponent(event.location + ', Recife, PE, Brasil');
+    const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${address}`;
+    window.open(mapsUrl, '_blank');
+    toast.success('Abrindo Google Maps...');
+  };
+
+  // Função para inscrever-se/cancelar inscrição no evento (TOGGLE)
+  const handleSubscribe = async () => {
+    // Verificar se usuário está logado
+    if (!userId) {
+      toast.error('❌ Você precisa estar logado para se inscrever', {
+        description: 'Faça login para continuar'
+      });
+      return;
+    }
+
+    setIsLoadingSubscription(true);
+
+    try {
+      if (!isSubscribed) {
+        // ===================================
+        // CASO 1: INSCREVER NO EVENTO
+        // ===================================
+        console.log('📝 Inscrevendo usuário no evento...');
+        
+        const { error } = await supabase
+          .from('inscricoes')
+          .insert({
+            evento_id: event.id,
+            usuario_id: userId
+          });
+
+        if (error) {
+          // Verificar se já está inscrito (violação de constraint UNIQUE)
+          if (error.code === '23505') {
+            console.log('ℹ️ Usuário já estava inscrito, atualizando estado local');
+            setIsSubscribed(true);
+            toast.info('Você já está inscrito neste evento');
+          } else {
+            throw error;
+          }
+        } else {
+          console.log('✅ Inscrição realizada com sucesso');
+          setIsSubscribed(true);
+          toast.success('✅ Inscrição confirmada!', {
+            description: `Você está inscrito em ${event.title}`
+          });
+        }
+      } else {
+        // ===================================
+        // CASO 2: CANCELAR INSCRIÇÃO
+        // ===================================
+        console.log('🗑️ Cancelando inscrição do evento...');
+        
+        const { error } = await supabase
+          .from('inscricoes')
+          .delete()
+          .eq('evento_id', event.id)
+          .eq('usuario_id', userId);
+
+        if (error) {
+          throw error;
+        }
+
+        console.log('✅ Inscrição cancelada com sucesso');
+        setIsSubscribed(false);
+        toast.success('Inscrição cancelada', {
+          description: 'Você pode se inscrever novamente a qualquer momento'
+        });
+      }
+    } catch (error: any) {
+      console.error('❌ Erro ao processar inscrição:', error);
+      toast.error('Erro ao processar inscrição', {
+        description: error.message || 'Tente novamente mais tarde'
+      });
+    } finally {
+      setIsLoadingSubscription(false);
+    }
   };
 
   return (
@@ -170,15 +307,37 @@ export const EventDetailScreen: React.FC<EventDetailScreenProps> = ({ event, onB
               {avaliacoes.filter(av => av.comentario).map((av, index) => (
                 <div key={index} className="avaliacao-item" style={{
                   padding: '15px',
-                  backgroundColor: 'var(--card-bg)',
+                  backgroundColor: 'var(--card-bg-color)',
                   borderRadius: '8px',
                   marginBottom: '10px',
-                  border: '1px solid var(--border-color)'
+                  border: '2px solid var(--border-color)'
                 }}>
-                  <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
-                    {renderStars(av.nota)}
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '10px' }}>
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                      <div style={{ 
+                        width: '32px', 
+                        height: '32px', 
+                        borderRadius: '50%', 
+                        background: 'var(--accent-color)', 
+                        display: 'flex', 
+                        alignItems: 'center', 
+                        justifyContent: 'center',
+                        color: 'white',
+                        fontWeight: 'bold'
+                      }}>
+                        {av.usuarios?.nome?.charAt(0).toUpperCase() || '?'}
+                      </div>
+                      <strong style={{ color: 'var(--primary-color)' }}>
+                        {av.usuarios?.nome || 'Usuário Anônimo'}
+                      </strong>
+                    </div>
+                    <div style={{ display: 'flex', gap: '4px' }}>
+                      {renderStars(av.nota)}
+                    </div>
                   </div>
-                  <p style={{ margin: 0, color: 'var(--text-primary)' }}>{av.comentario}</p>
+                  <p style={{ margin: 0, color: 'var(--primary-color)', opacity: 0.8, lineHeight: '1.5' }}>
+                    {av.comentario}
+                  </p>
                 </div>
               ))}
             </div>
@@ -186,13 +345,21 @@ export const EventDetailScreen: React.FC<EventDetailScreenProps> = ({ event, onB
         </div>
 
         <div className="detail-actions">
-          <button className="primary-btn">
+          <button className="primary-btn" onClick={handleOpenMaps}>
             <Navigation size={20} />
             Como Chegar
           </button>
           <button className="primary-btn" onClick={() => setShowShareDialog(true)}>
             <Share2 size={20} />
             Compartilhar
+          </button>
+          <button 
+            className={isSubscribed ? "primary-btn-subscribed" : "primary-btn"}
+            onClick={handleSubscribe}
+            disabled={isLoadingSubscription}
+          >
+            {isSubscribed ? <Check size={20} /> : <UserPlus size={20} />}
+            {isLoadingSubscription ? 'Carregando...' : isSubscribed ? 'Inscrito ✅' : 'Inscrever-se'}
           </button>
         </div>
       </div>

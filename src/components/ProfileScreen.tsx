@@ -103,44 +103,6 @@ export const ProfileScreen: React.FC<ProfileScreenProps> = ({
         </div>
       </div>
 
-      {/* Meus Eventos Passados */}
-      <div className="profile-section">
-        <div className="section-header">
-          <Calendar size={24} className="section-icon" />
-          <h2>Meus Eventos Passados</h2>
-        </div>
-        <div className="profile-events-list">
-          {pastEvents.length === 0 ? (
-            <p className="empty-message">Você ainda não participou de nenhum evento</p>
-          ) : (
-            pastEvents.map((event) => (
-              <div 
-                key={event.id} 
-                className="profile-event-item"
-              >
-                <ImageWithFallback 
-                  src={event.image} 
-                  alt={event.title}
-                  className="profile-event-image"
-                />
-                <div className="profile-event-info">
-                  <h3>{event.title}</h3>
-                  <p>{event.date}</p>
-                </div>
-                {!event.hasRated && (
-                  <button 
-                    className="rate-btn"
-                    onClick={() => onRateEvent(event.id)}
-                  >
-                    Avaliar
-                  </button>
-                )}
-              </div>
-            ))
-          )}
-        </div>
-      </div>
-
       <button 
         className="secondary-btn full-width" 
         style={{ marginTop: '20px' }}

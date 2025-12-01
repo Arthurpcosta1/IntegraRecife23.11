@@ -35,6 +35,67 @@ export default function App() {
   const [eventsLoaded, setEventsLoaded] = useState(false);
   const [showInterestModal, setShowInterestModal] = useState(false);
   const [needsInterests, setNeedsInterests] = useState(false);
+  const [isCheckingSession, setIsCheckingSession] = useState(true);
+
+  // Verificar sessão persistente do Supabase ao carregar o app
+  useEffect(() => {
+    checkSession();
+  }, []);
+
+  const checkSession = async () => {
+    try {
+      const { data: { session }, error } = await supabase.auth.getSession();
+      
+      if (error) {
+        console.error('❌ Erro ao verificar sessão:', error);
+        setIsCheckingSession(false);
+        return;
+      }
+
+      if (session?.user) {
+        console.log('✅ Sessão encontrada, restaurando usuário:', session.user.email);
+        
+        // Buscar dados do usuário no banco
+        const { data: userData, error: userError } = await supabase
+          .from('usuarios')
+          .select('id, nome, tipo, interesses')
+          .eq('email', session.user.email)
+          .single();
+
+        if (userData) {
+          const user = {
+            id: userData.id,
+            email: session.user.email,
+            name: userData.nome || session.user.email.split('@')[0],
+            type: (userData.tipo === 'admin' ? 'admin' : 'cidadao') as 'admin' | 'cidadao',
+            accessToken: session.access_token
+          };
+
+          setCurrentUser(user);
+          setIsAuthenticated(true);
+
+          // Verificar interesses
+          if (userData.tipo === 'cidadao' && (!userData.interesses || userData.interesses.length === 0)) {
+            setNeedsInterests(true);
+            setShowInterestModal(true);
+          }
+
+          // Navegar para a tela apropriada
+          if (userData.tipo === 'admin') {
+            setCurrentScreen('admin');
+          } else {
+            setCurrentScreen('main');
+          }
+        }
+      } else {
+        console.log('ℹ️ Nenhuma sessão ativa encontrada');
+      }
+    } catch (error) {
+      console.error('❌ Erro ao verificar sessão:', error);
+    } finally {
+      setIsCheckingSession(false);
+    }
+  };
 
   // Carregar eventos do banco de dados no início
   useEffect(() => {
@@ -608,6 +669,37 @@ export default function App() {
   const selectedEvent = selectedEventId ? events.find(e => e.id === selectedEventId) : null;
   const selectedTour = selectedTourId ? tours.find(t => t.id === selectedTourId) : null;
 
+  // Mostrar loading durante verificação de sessão
+  if (isCheckingSession) {
+    return (
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: '100vh',
+        background: 'var(--bg-body)',
+        flexDirection: 'column',
+        gap: '20px'
+      }}>
+        <div style={{
+          width: '50px',
+          height: '50px',
+          border: '4px solid var(--border-color)',
+          borderTop: '4px solid var(--accent-color)',
+          borderRadius: '50%',
+          animation: 'spin 1s linear infinite'
+        }} />
+        <p style={{
+          color: 'var(--primary-color)',
+          fontSize: '1.1rem',
+          fontWeight: '500'
+        }}>
+          Verificando sessão...
+        </p>
+      </div>
+    );
+  }
+
   if (!isAuthenticated) {
     return <LoginScreen onLogin={handleLogin} />;
   }
@@ -798,6 +890,7 @@ export default function App() {
             event={selectedEvent}
             onBack={handleBack}
             onRate={() => handleOpenRating(selectedEvent.id, selectedEvent.title)}
+            userId={currentUser?.id}
           />
         )}
 

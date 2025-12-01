@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Plus, Calendar, MapPin, Clock, Image as ImageIcon, Tag, FileText, Users, LayoutDashboard, RefreshCw, Edit, Trash2 } from 'lucide-react';
+import { Plus, Calendar, MapPin, Clock, Image as ImageIcon, Tag, FileText, Users, LayoutDashboard, RefreshCw, Edit, Trash2, UserCheck } from 'lucide-react';
 import { UserManagement } from './UserManagement';
 import { supabase } from '../utils/supabase/client';
 import { toast } from 'sonner@2.0.3';
@@ -9,6 +9,8 @@ import { Input } from './ui/input';
 import { Label } from './ui/label';
 import { Textarea } from './ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from './ui/select';
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from './ui/table';
+import { Badge } from './ui/badge';
 
 interface Event {
   id: number;
@@ -40,6 +42,10 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ events, onAddEve
   const [loading, setLoading] = useState(false);
   const [editingEvent, setEditingEvent] = useState<any | null>(null);
   const [showEditDialog, setShowEditDialog] = useState(false);
+  const [showSubscribersDialog, setShowSubscribersDialog] = useState(false);
+  const [subscribersData, setSubscribersData] = useState<any[]>([]);
+  const [loadingSubscribers, setLoadingSubscribers] = useState(false);
+  const [currentEventName, setCurrentEventName] = useState('');
   const [formData, setFormData] = useState({
     title: '',
     date: '',
@@ -323,6 +329,45 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ events, onAddEve
     }
   };
 
+  // Abrir dialog de inscritos
+  const handleOpenSubscribersDialog = async (eventId: number) => {
+    try {
+      const { data: event, error } = await supabase
+        .from('eventos')
+        .select('*')
+        .eq('id', eventId)
+        .single();
+
+      if (error) {
+        console.error('Erro ao buscar evento:', error);
+        toast.error('Erro ao carregar dados do evento');
+        return;
+      }
+
+      if (event) {
+        setCurrentEventName(event.titulo);
+        setLoadingSubscribers(true);
+        const { data: subscribers, error: subscribersError } = await supabase
+          .from('inscricoes')
+          .select('usuario_id, usuarios (nome, email)')
+          .eq('evento_id', eventId);
+
+        if (subscribersError) {
+          console.error('Erro ao buscar inscritos:', subscribersError);
+          toast.error('Erro ao carregar inscritos');
+        } else if (subscribers) {
+          setSubscribersData(subscribers);
+          console.log('✅ Inscritos carregados:', subscribers.length);
+        }
+        setLoadingSubscribers(false);
+        setShowSubscribersDialog(true);
+      }
+    } catch (error) {
+      console.error('Erro ao buscar evento:', error);
+      toast.error('Erro ao carregar evento');
+    }
+  };
+
   return (
     <div className="admin-dashboard">
       <div className="admin-header">
@@ -603,6 +648,15 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ events, onAddEve
                             <Trash2 className="h-4 w-4" />
                             Excluir
                           </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleOpenSubscribersDialog(event.id)}
+                            className="gap-1 text-blue-600 hover:text-blue-700 hover:bg-blue-50"
+                          >
+                            <UserCheck className="h-4 w-4" />
+                            Inscritos
+                          </Button>
                         </div>
                       </td>
                     </tr>
@@ -776,6 +830,52 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ events, onAddEve
             </Button>
             <Button onClick={handleSaveEdit}>
               Salvar Alterações
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Dialog de Inscritos */}
+      <Dialog open={showSubscribersDialog} onOpenChange={setShowSubscribersDialog}>
+        <DialogContent className="max-w-2xl max-h-[90vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Inscritos em {currentEventName}</DialogTitle>
+            <DialogDescription>
+              Lista de usuários inscritos neste evento
+            </DialogDescription>
+          </DialogHeader>
+
+          {loadingSubscribers ? (
+            <div className="empty-message">
+              <RefreshCw className="animate-spin h-6 w-6 mx-auto mb-2" />
+              Carregando inscritos...
+            </div>
+          ) : subscribersData.length === 0 ? (
+            <div className="empty-message">
+              Nenhum usuário inscrito neste evento ainda.
+            </div>
+          ) : (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Nome</TableHead>
+                  <TableHead>Email</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {subscribersData.map(subscriber => (
+                  <TableRow key={subscriber.usuario_id}>
+                    <TableCell className="font-medium">{subscriber.usuarios.nome}</TableCell>
+                    <TableCell>{subscriber.usuarios.email}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setShowSubscribersDialog(false)}>
+              Fechar
             </Button>
           </DialogFooter>
         </DialogContent>

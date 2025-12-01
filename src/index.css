@@ -3007,6 +3007,10 @@
   box-sizing: border-box;
 }
 
+html {
+  text-size-adjust: 100%;
+}
+
 * {
   margin: 0;
   padding: 0;
@@ -3055,8 +3059,9 @@ h2 {
 
 body {
   background: var(--bg-body);
+  min-height: 100vh;
   position: relative;
-  overflow: hidden;
+  overflow: hidden auto;
 }
 
 .main-menu {
@@ -3996,8 +4001,11 @@ body::-webkit-scrollbar-thumb {
 
 .app-container {
   background: var(--bg-body);
+  width: 100%;
+  max-width: 100vw;
   min-height: 100vh;
   display: flex;
+  overflow-x: hidden;
 }
 
 .mobile-header {
@@ -4423,6 +4431,34 @@ body::-webkit-scrollbar-thumb {
 }
 
 .primary-btn:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+}
+
+.primary-btn-subscribed {
+  cursor: pointer;
+  color: #fff;
+  background: #4a920f;
+  border: 2px solid #4a920f;
+  border-radius: 10px;
+  justify-content: center;
+  align-items: center;
+  gap: 10px;
+  min-width: 160px;
+  padding: 14px 28px;
+  font-weight: 600;
+  transition: all .3s;
+  display: flex;
+}
+
+.primary-btn-subscribed:hover {
+  background: #3a7609;
+  border-color: #3a7609;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px #4a920f4d;
+}
+
+.primary-btn-subscribed:disabled {
   opacity: .5;
   cursor: not-allowed;
 }
@@ -4910,9 +4946,10 @@ body::-webkit-scrollbar-thumb {
   justify-content: center;
   align-items: center;
   min-height: 100vh;
+  padding: 40px 20px;
   display: flex;
   position: relative;
-  overflow: hidden;
+  overflow: hidden auto;
 }
 
 .login-background {
@@ -6190,7 +6227,7 @@ body::-webkit-scrollbar-thumb {
 }
 
 .notification-bell {
-  z-index: 1000;
+  z-index: 900;
   background: var(--accent-color);
   color: #fff;
   cursor: pointer;

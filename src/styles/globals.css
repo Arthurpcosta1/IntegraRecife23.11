@@ -31,6 +31,14 @@
   box-sizing: border-box;
 }
 
+html {
+  /* Corrigir zoom/escala da página */
+  -webkit-text-size-adjust: 100%;
+  -moz-text-size-adjust: 100%;
+  -ms-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
 * {
   padding: 0;
   margin: 0;
@@ -86,7 +94,9 @@ h2 {
 body {
   position: relative;
   background: var(--bg-body);
-  overflow: hidden;
+  overflow-x: hidden; /* Apenas esconder overflow horizontal */
+  overflow-y: auto; /* Permitir scroll vertical */
+  min-height: 100vh;
 }
 
 /* MAIN MENU */
@@ -1068,6 +1078,10 @@ body::-webkit-scrollbar-thumb {
   min-height: 100vh;
   background: var(--bg-body);
   display: flex;
+  /* Garantir responsividade adequada */
+  width: 100%;
+  max-width: 100vw;
+  overflow-x: hidden;
 }
 
 /* Mobile Header */
@@ -1518,6 +1532,35 @@ body::-webkit-scrollbar-thumb {
 }
 
 .primary-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Estilo para botão de inscrito */
+.primary-btn-subscribed {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  padding: 14px 28px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  border: 2px solid #4a920f;
+  background: #4a920f;
+  color: white;
+  font-weight: 600;
+  min-width: 160px;
+}
+
+.primary-btn-subscribed:hover {
+  background: #3a7609;
+  border-color: #3a7609;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(74, 146, 15, 0.3);
+}
+
+.primary-btn-subscribed:disabled {
   opacity: 0.5;
   cursor: not-allowed;
 }
@@ -2026,7 +2069,9 @@ body::-webkit-scrollbar-thumb {
   display: flex;
   align-items: center;
   justify-content: center;
-  overflow: hidden;
+  overflow-y: auto; /* Permitir scroll vertical */
+  overflow-x: hidden; /* Apenas esconder overflow horizontal */
+  padding: 40px 20px; /* Adicionar padding para evitar corte do conteúdo */
 }
 
 .login-background {
@@ -3399,7 +3444,7 @@ body::-webkit-scrollbar-thumb {
   position: fixed;
   top: 20px;
   right: 20px;
-  z-index: 1000;
+  z-index: 900; /* Reduzido de 1000 para 900 - para não sobrepor modais (z-index 1000) */
   background: var(--accent-color);
   color: white;
   border: none;
