@@ -1,11 +1,12 @@
+## Sobre o Projeto
 
-  # Projeto Ana/Jenifer
+Desenvolvemos o **Integra Recife**  como parte do Trabalho de uma disciplina de Projeto Integrador & Engenharia de Requisitos. O objetivo principal é resolver a desarticulação entre a gestão cultural e o turismo na cidade, oferecendo uma ferramenta centralizada para:
 
-  This is a code bundle for Projeto Ana/Jenifer. The original project is available at https://www.figma.com/design/ir091r2byb5VeG9lAKP7MD/Projeto-Ana-Jenifer.
+* **Cidadãos/Turistas:** Descobrir eventos, avaliar atrações e receber notificações personalizadas.
+* **Gestores Públicos:** Gerir eventos, coordenar projetos conjuntos entre secretarias e extrair relatórios gerenciais.
 
-  ## Running the code
 
-  Run `npm i` to install the dependencies.
-
-  Run `npm run dev` to start the development server.
+  
+Run `npm i` 
+`npm run dev` 
   
