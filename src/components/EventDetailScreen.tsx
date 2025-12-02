@@ -30,6 +30,8 @@ export const EventDetailScreen: React.FC<EventDetailScreenProps> = ({ event, onB
   const [reviewCount, setReviewCount] = useState(0);
   const [avaliacoes, setAvaliacoes] = useState<any[]>([]);
   const [showShareDialog, setShowShareDialog] = useState(false);
+  const [userHasRated, setUserHasRated] = useState(false);
+  const [userRating, setUserRating] = useState<{ nota: number; comentario: string | null } | null>(null);
   
   // Estados para inscrição
   const [isSubscribed, setIsSubscribed] = useState(false);
@@ -89,11 +91,22 @@ export const EventDetailScreen: React.FC<EventDetailScreenProps> = ({ event, onB
         setRating(media);
         setReviewCount(data.length);
         setAvaliacoes(data);
+
+        // Verificar se o usuário atual já avaliou o evento
+        if (userId) {
+          const userAvaliacao = data.find(av => av.usuario_id === userId);
+          if (userAvaliacao) {
+            setUserHasRated(true);
+            setUserRating({ nota: userAvaliacao.nota, comentario: userAvaliacao.comentario });
+          }
+        }
       } else {
         console.log('ℹ️ Nenhuma avaliação encontrada, usando valores padrão');
         setRating(0);
         setReviewCount(0);
         setAvaliacoes([]);
+        setUserHasRated(false);
+        setUserRating(null);
       }
     } catch (error) {
       console.error('❌ Erro ao carregar avaliações:', error);
@@ -296,9 +309,30 @@ export const EventDetailScreen: React.FC<EventDetailScreenProps> = ({ event, onB
               {reviewCount > 0 ? `${rating.toFixed(1)} (${reviewCount} ${reviewCount === 1 ? 'avaliação' : 'avaliações'})` : 'Sem avaliações ainda'}
             </span>
           </div>
-          <button className="secondary-btn" onClick={() => onRate(event.id, event.title)}>
-            {reviewCount > 0 ? 'Adicionar Avaliação' : 'Seja o Primeiro a Avaliar'}
-          </button>
+          {userId ? (
+            <button 
+              className="secondary-btn" 
+              onClick={() => onRate(event.id, event.title)}
+              style={userHasRated ? {
+                background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                color: 'white',
+                border: 'none'
+              } : undefined}
+            >
+              {userHasRated ? '✏️ Editar Minha Avaliação' : (reviewCount > 0 ? '⭐ Adicionar Avaliação' : '⭐ Seja o Primeiro a Avaliar')}
+            </button>
+          ) : (
+            <p style={{ 
+              padding: '12px', 
+              background: 'var(--card-bg-color)', 
+              borderRadius: '8px',
+              textAlign: 'center',
+              color: 'var(--primary-color)',
+              opacity: 0.7
+            }}>
+              Faça login para avaliar este evento
+            </p>
+          )}
           
           {/* Lista de comentários */}
           {avaliacoes.length > 0 && avaliacoes.some(av => av.comentario) && (

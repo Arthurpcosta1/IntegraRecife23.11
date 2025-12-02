@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Clock, MapPin, Plus, Edit, Trash2, Eye, Search } from 'lucide-react';
+import { Clock, MapPin, Plus, Edit, Trash2, Eye, Search, FileText, CheckCircle } from 'lucide-react';
 import { ImageWithFallback } from './figma/ImageWithFallback';
 import { supabase } from '../utils/supabase/client';
 import { toast } from 'sonner@2.0.3';
@@ -9,6 +9,9 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, Di
 import { Input } from './ui/input';
 import { Textarea } from './ui/textarea';
 import { Label } from './ui/label';
+import { Tabs, TabsContent, TabsList, TabsTrigger } from './ui/tabs';
+import { Badge } from './ui/badge';
+import { ToursDraftsManager } from './ToursDraftsManager';
 
 interface Tour {
   id: number;
@@ -110,7 +113,7 @@ export const ToursScreen: React.FC<ToursScreenProps> = ({
           descricao_completa: newTour.descricao_completa || newTour.descricao,
           duracao_estimada: newTour.duracao_estimada,
           imagem: newTour.imagem || 'https://images.unsplash.com/photo-1661721097539-44f58bb849d8?w=800',
-          status: 'publicado',
+          status: 'publicado', // Status publicado por padrão
           usuario_criador: currentUser.id
         }])
         .select()
@@ -118,7 +121,7 @@ export const ToursScreen: React.FC<ToursScreenProps> = ({
 
       if (error) throw error;
 
-      toast.success('Roteiro criado com sucesso!');
+      toast.success('Roteiro publicado com sucesso!');
       setShowCreateModal(false);
       setNewTour({
         titulo: '',
@@ -133,6 +136,61 @@ export const ToursScreen: React.FC<ToursScreenProps> = ({
     } catch (error: any) {
       console.error('Erro ao criar roteiro:', error);
       toast.error('Erro ao criar roteiro: ' + error.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleSaveDraft = async () => {
+    if (!currentUser) {
+      toast.error('Você precisa estar logado para salvar rascunhos');
+      return;
+    }
+
+    if (currentUser.type !== 'admin') {
+      toast.error('Apenas administradores podem criar roteiros');
+      return;
+    }
+
+    if (!newTour.titulo || !newTour.descricao || !newTour.duracao_estimada) {
+      toast.error('Preencha todos os campos obrigatórios');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const { data, error } = await supabase
+        .from('roteiros_turisticos')
+        .insert([{
+          titulo: newTour.titulo,
+          descricao: newTour.descricao,
+          descricao_completa: newTour.descricao_completa || newTour.descricao,
+          duracao_estimada: newTour.duracao_estimada,
+          imagem: newTour.imagem || 'https://images.unsplash.com/photo-1661721097539-44f58bb849d8?w=800',
+          status: 'rascunho', // Status rascunho (corrigido de 'draft' para 'rascunho')
+          usuario_criador: currentUser.id
+        }])
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      toast.success('Rascunho salvo com sucesso! Você pode publicá-lo depois.');
+      setShowCreateModal(false);
+      setNewTour({
+        titulo: '',
+        descricao: '',
+        descricao_completa: '',
+        duracao_estimada: '',
+        imagem: ''
+      });
+
+      // Recarregar roteiros
+      await loadToursFromDatabase();
+    } catch (error: any) {
+      console.error('Erro ao salvar rascunho:', error);
+      toast.error('Erro ao salvar rascunho: ' + error.message);
     } finally {
       setLoading(false);
     }
@@ -198,95 +256,180 @@ export const ToursScreen: React.FC<ToursScreenProps> = ({
         )}
       </div>
 
-      {/* Barra de Pesquisa */}
-      <div className="search-bar mb-6">
-        <Search size={20} className="search-icon" />
-        <input
-          type="text"
-          placeholder="Buscar roteiros..."
-          value={searchQuery}
-          onChange={(e) => setSearchQuery(e.target.value)}
-          className="search-input"
-        />
-      </div>
+      {/* Tabs: Publicados e Rascunhos (apenas para admin) */}
+      {currentUser && currentUser.type === 'admin' ? (
+        <Tabs defaultValue="publicados" className="w-full">
+          <TabsList className="mb-6">
+            <TabsTrigger value="publicados" className="flex items-center gap-2">
+              <CheckCircle size={18} />
+              Roteiros Publicados
+            </TabsTrigger>
+            <TabsTrigger value="rascunhos" className="flex items-center gap-2">
+              <FileText size={18} />
+              Rascunhos
+            </TabsTrigger>
+          </TabsList>
 
-      {/* Grid de Roteiros */}
-      <div className="tours-grid">
-        {filteredTours.length === 0 ? (
-          <div className="col-span-full text-center py-12">
-            <MapPin size={48} className="mx-auto mb-4 opacity-30" />
-            <p className="text-lg opacity-60">
-              {searchQuery ? 'Nenhum roteiro encontrado' : 'Nenhum roteiro disponível'}
-            </p>
-            {currentUser && currentUser.type === 'admin' && !searchQuery && (
-              <button 
-                onClick={() => setShowCreateModal(true)} 
-                className="mt-4"
-                style={{
-                  background: 'linear-gradient(135deg, #d946ef 0%, #ec4899 100%)',
-                  color: 'white',
-                  border: 'none',
-                  borderRadius: '9999px',
-                  padding: '12px 28px',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '10px',
-                  cursor: 'pointer',
-                  boxShadow: '0 4px 14px rgba(236, 72, 153, 0.35)',
-                  transition: 'all 0.3s ease',
-                  fontFamily: 'system-ui, -apple-system, sans-serif',
-                  fontWeight: '600',
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-2px)';
-                  e.currentTarget.style.boxShadow = '0 6px 20px rgba(236, 72, 153, 0.45)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = '0 4px 14px rgba(236, 72, 153, 0.35)';
-                }}
-              >
-                <Plus size={18} />
-                Criar Primeiro Roteiro
-              </button>
+          <TabsContent value="publicados">
+            {/* Barra de Pesquisa */}
+            <div className="search-bar mb-6">
+              <Search size={20} className="search-icon" />
+              <input
+                type="text"
+                placeholder="Buscar roteiros..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="search-input"
+              />
+            </div>
+
+            {/* Grid de Roteiros */}
+            <div className="tours-grid">
+              {filteredTours.length === 0 ? (
+                <div className="col-span-full text-center py-12">
+                  <MapPin size={48} className="mx-auto mb-4 opacity-30" />
+                  <p className="text-lg opacity-60">
+                    {searchQuery ? 'Nenhum roteiro encontrado' : 'Nenhum roteiro disponível'}
+                  </p>
+                  {!searchQuery && (
+                    <button 
+                      onClick={() => setShowCreateModal(true)} 
+                      className="mt-4"
+                      style={{
+                        background: 'linear-gradient(135deg, #d946ef 0%, #ec4899 100%)',
+                        color: 'white',
+                        border: 'none',
+                        borderRadius: '9999px',
+                        padding: '12px 28px',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '10px',
+                        cursor: 'pointer',
+                        boxShadow: '0 4px 14px rgba(236, 72, 153, 0.35)',
+                        transition: 'all 0.3s ease',
+                        fontFamily: 'system-ui, -apple-system, sans-serif',
+                        fontWeight: '600',
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = 'translateY(-2px)';
+                        e.currentTarget.style.boxShadow = '0 6px 20px rgba(236, 72, 153, 0.45)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = 'translateY(0)';
+                        e.currentTarget.style.boxShadow = '0 4px 14px rgba(236, 72, 153, 0.35)';
+                      }}
+                    >
+                      <Plus size={18} />
+                      Criar Primeiro Roteiro
+                    </button>
+                  )}
+                </div>
+              ) : (
+                filteredTours.map((tour) => (
+                  <div 
+                    key={tour.id} 
+                    className="tour-card"
+                    onClick={() => handleTourClick(tour.id)}
+                  >
+                    <div className="tour-image-wrapper">
+                      <ImageWithFallback 
+                        src={tour.image} 
+                        alt={tour.title}
+                        className="tour-image"
+                      />
+                      <div className="tour-badge">
+                        <MapPin size={14} />
+                        {tour.pointsOfInterest} pontos
+                      </div>
+                      {tour.views !== undefined && tour.views > 0 && (
+                        <div className="tour-views-badge">
+                          <Eye size={14} />
+                          {tour.views}
+                        </div>
+                      )}
+                    </div>
+                    <div className="tour-card-content">
+                      <h3 className="tour-title">{tour.title}</h3>
+                      <p className="tour-description">{tour.description}</p>
+                      <div className="tour-duration">
+                        <Clock size={16} />
+                        <span>Duração estimada: {tour.duration}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))
+              )}
+            </div>
+          </TabsContent>
+
+          <TabsContent value="rascunhos">
+            <ToursDraftsManager 
+              currentUserId={currentUser.id} 
+              onDraftPublished={loadToursFromDatabase}
+            />
+          </TabsContent>
+        </Tabs>
+      ) : (
+        <>
+          {/* Barra de Pesquisa (usuário comum) */}
+          <div className="search-bar mb-6">
+            <Search size={20} className="search-icon" />
+            <input
+              type="text"
+              placeholder="Buscar roteiros..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="search-input"
+            />
+          </div>
+
+          {/* Grid de Roteiros (usuário comum) */}
+          <div className="tours-grid">
+            {filteredTours.length === 0 ? (
+              <div className="col-span-full text-center py-12">
+                <MapPin size={48} className="mx-auto mb-4 opacity-30" />
+                <p className="text-lg opacity-60">
+                  {searchQuery ? 'Nenhum roteiro encontrado' : 'Nenhum roteiro disponível'}
+                </p>
+              </div>
+            ) : (
+              filteredTours.map((tour) => (
+                <div 
+                  key={tour.id} 
+                  className="tour-card"
+                  onClick={() => handleTourClick(tour.id)}
+                >
+                  <div className="tour-image-wrapper">
+                    <ImageWithFallback 
+                      src={tour.image} 
+                      alt={tour.title}
+                      className="tour-image"
+                    />
+                    <div className="tour-badge">
+                      <MapPin size={14} />
+                      {tour.pointsOfInterest} pontos
+                    </div>
+                    {tour.views !== undefined && tour.views > 0 && (
+                      <div className="tour-views-badge">
+                        <Eye size={14} />
+                        {tour.views}
+                      </div>
+                    )}
+                  </div>
+                  <div className="tour-card-content">
+                    <h3 className="tour-title">{tour.title}</h3>
+                    <p className="tour-description">{tour.description}</p>
+                    <div className="tour-duration">
+                      <Clock size={16} />
+                      <span>Duração estimada: {tour.duration}</span>
+                    </div>
+                  </div>
+                </div>
+              ))
             )}
           </div>
-        ) : (
-          filteredTours.map((tour) => (
-            <div 
-              key={tour.id} 
-              className="tour-card"
-              onClick={() => handleTourClick(tour.id)}
-            >
-              <div className="tour-image-wrapper">
-                <ImageWithFallback 
-                  src={tour.image} 
-                  alt={tour.title}
-                  className="tour-image"
-                />
-                <div className="tour-badge">
-                  <MapPin size={14} />
-                  {tour.pointsOfInterest} pontos
-                </div>
-                {tour.views !== undefined && tour.views > 0 && (
-                  <div className="tour-views-badge">
-                    <Eye size={14} />
-                    {tour.views}
-                  </div>
-                )}
-              </div>
-              <div className="tour-card-content">
-                <h3 className="tour-title">{tour.title}</h3>
-                <p className="tour-description">{tour.description}</p>
-                <div className="tour-duration">
-                  <Clock size={16} />
-                  <span>Duração estimada: {tour.duration}</span>
-                </div>
-              </div>
-            </div>
-          ))
-        )}
-      </div>
+        </>
+      )}
 
       {/* Modal de Criar Roteiro */}
       <Dialog open={showCreateModal} onOpenChange={setShowCreateModal}>
@@ -364,7 +507,7 @@ export const ToursScreen: React.FC<ToursScreenProps> = ({
             </div>
           </div>
 
-          <DialogFooter>
+          <DialogFooter className="flex gap-2">
             <Button
               variant="outline"
               onClick={() => setShowCreateModal(false)}
@@ -372,9 +515,18 @@ export const ToursScreen: React.FC<ToursScreenProps> = ({
             >
               Cancelar
             </Button>
-            <Button onClick={handleCreateTour} disabled={loading}>
-              {loading ? 'Criando...' : 'Criar Roteiro'}
-            </Button>
+            <div className="flex gap-2 ml-auto">
+              <Button 
+                variant="secondary"
+                onClick={handleSaveDraft} 
+                disabled={loading}
+              >
+                {loading ? 'Salvando...' : '💾 Salvar Rascunho'}
+              </Button>
+              <Button onClick={handleCreateTour} disabled={loading}>
+                {loading ? 'Publicando...' : '✅ Publicar Roteiro'}
+              </Button>
+            </div>
           </DialogFooter>
         </DialogContent>
       </Dialog>

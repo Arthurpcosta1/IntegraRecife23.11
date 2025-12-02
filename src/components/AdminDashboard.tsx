@@ -31,11 +31,12 @@ interface AdminDashboardProps {
   onAddEvent: (event: Omit<Event, 'id' | 'rating' | 'reviewCount'>) => void;
   onDeleteEvent: (eventId: number) => void;
   accessToken?: string;
+  currentUserId?: string;
 }
 
 type AdminTab = 'eventos' | 'usuarios';
 
-export const AdminDashboard: React.FC<AdminDashboardProps> = ({ events, onAddEvent, onDeleteEvent, accessToken }) => {
+export const AdminDashboard: React.FC<AdminDashboardProps> = ({ events, onAddEvent, onDeleteEvent, accessToken, currentUserId }) => {
   const [showForm, setShowForm] = useState(false);
   const [activeTab, setActiveTab] = useState<AdminTab>('eventos');
   const [dbEvents, setDbEvents] = useState<any[]>([]);
@@ -406,8 +407,8 @@ export const AdminDashboard: React.FC<AdminDashboardProps> = ({ events, onAddEve
 
       {/* Conteúdo das Abas */}
       {activeTab === 'usuarios' ? (
-        accessToken ? (
-          <UserManagement accessToken={accessToken} />
+        currentUserId ? (
+          <UserManagement accessToken={accessToken} currentUserId={currentUserId} />
         ) : (
           <div className="empty-message">
             Faça login para gerenciar usuários.

@@ -1,4 +1,4 @@
-#  Arquitetura do Sistema - Integra Recife
+# 🏗️ Arquitetura do Sistema - Integra Recife
 
 ## Visão Geral
 
@@ -6,7 +6,7 @@ A aplicação Integra Recife segue uma arquitetura em camadas com separação cl
 
 ---
 
-##  Padrões Arquiteturais
+## 📐 Padrões Arquiteturais
 
 ### 1. Component-Based Architecture
 
@@ -47,7 +47,7 @@ A aplicação Integra Recife segue uma arquitetura em camadas com separação cl
 
 ---
 
-##  Fluxo de Dados
+## 🔄 Fluxo de Dados
 
 ### Padrão de Dados Unidirecional
 
@@ -157,7 +157,7 @@ notificacoes
 
 ---
 
-##  Segurança e Autenticação
+## 🔐 Segurança e Autenticação
 
 ### Row Level Security (RLS)
 
@@ -199,7 +199,7 @@ USING (
 
 ---
 
-##  Camada de Apresentação
+## 🎨 Camada de Apresentação
 
 ### Hierarquia de Componentes
 
@@ -235,7 +235,7 @@ App.tsx (Root)
 
 ---
 
-##  Integração com Supabase
+## 🔌 Integração com Supabase
 
 ### Cliente Supabase Singleton
 
@@ -281,7 +281,7 @@ export const useEvents = () => {
 
 ---
 
-##  Performance
+## 🎯 Performance
 
 ### Otimizações Implementadas
 
@@ -306,7 +306,7 @@ export const useEvents = () => {
 
 ---
 
-##  Testabilidade
+## 🧪 Testabilidade
 
 ### Estrutura para Testes
 
@@ -334,7 +334,7 @@ describe('useEvents', () => {
 
 ---
 
-##  Build e Deploy
+## 📦 Build e Deploy
 
 ### Pipeline de Build
 
@@ -358,7 +358,7 @@ describe('useEvents', () => {
 
 ---
 
-## Escalabilidade
+## 🔮 Escalabilidade
 
 ### Preparado para Crescimento
 
@@ -387,4 +387,4 @@ describe('useEvents', () => {
 
 ---
 
-**Última atualização**: Dezembro 2025
+**Última atualização**: Dezembro 2024

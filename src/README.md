@@ -1,4 +1,4 @@
-#  Integra Recife
+# 🎭 Integra Recife
 
 > Plataforma digital para conectar cidadãos aos eventos culturais e roteiros turísticos do Recife
 
@@ -9,11 +9,11 @@
 
 ---
 
-##  Sobre o Projeto
+## 📋 Sobre o Projeto
 
 **Integra Recife** é uma plataforma web desenvolvida para promover a cultura e o turismo do Recife, conectando cidadãos a eventos culturais, roteiros turísticos e projetos colaborativos. A aplicação permite que usuários descubram eventos, avaliem experiências, criem roteiros personalizados e participem de fóruns comunitários.
 
-###  Principais Funcionalidades
+### 🎯 Principais Funcionalidades
 
 - **🎫 Gestão de Eventos**: Cadastro, busca e avaliação de eventos culturais
 - **🗺️ Roteiros Turísticos**: Criação e compartilhamento de roteiros temáticos
@@ -26,7 +26,7 @@
 
 ---
 
-##  Stack Tecnológica
+## 🛠️ Stack Tecnológica
 
 ### Frontend
 - **React 18.3** - Biblioteca UI
@@ -51,7 +51,7 @@
 
 ---
 
-##  Estrutura do Projeto
+## 📁 Estrutura do Projeto
 
 ```
 integra-recife/
@@ -106,7 +106,7 @@ integra-recife/
 
 ---
 
-##  Guia de Instalação
+## 🚀 Guia de Instalação
 
 ### Pré-requisitos
 
@@ -180,7 +180,7 @@ A aplicação estará disponível em `http://localhost:5173`
 
 ---
 
-##  Arquitetura e Decisões Técnicas
+## 🏗️ Arquitetura e Decisões Técnicas
 
 ### 1. Componentização
 

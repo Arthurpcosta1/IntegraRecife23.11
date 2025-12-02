@@ -152,7 +152,7 @@ export const CalendarScreen: React.FC<CalendarScreenProps> = ({ events, onEventC
     if (usingDatabase && dbEvents.length > 0) {
       // Converter eventos do banco para o formato local
       return dbEvents.map(dbEvent => ({
-        id: Math.floor(Math.random() * 100000),
+        id: dbEvent.id, // ✅ CORREÇÃO: usar o ID real do banco
         title: dbEvent.titulo,
         date: dbEvent.data_inicio,
         time: format(parseISO(dbEvent.data_inicio), 'HH:mm'),

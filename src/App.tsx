@@ -872,6 +872,7 @@ export default function App() {
             onAddEvent={handleAddEvent}
             onDeleteEvent={handleDeleteEvent}
             accessToken={currentUser?.accessToken}
+            currentUserId={currentUser?.id}
           />
         )}
 

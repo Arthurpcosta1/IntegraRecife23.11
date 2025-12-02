@@ -18,7 +18,7 @@ const CATEGORIAS_DISPONIVEIS = [
 
 export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
   const [isLogin, setIsLogin] = useState(true);
-  const [userType, setUserType] = useState<'admin' | 'cidadao'>('cidadao');
+  const [userType, setUserType] = useState<'admin' | 'cidadao'>('cidadao'); // Sempre cidadão no cadastro público
   const [loading, setLoading] = useState(false);
   const [interesses, setInteresses] = useState<string[]>([]);
   const [passwordError, setPasswordError] = useState('');
@@ -29,22 +29,10 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
     confirmPassword: ''
   });
 
-  // Validar força da senha
+  // Validar força da senha (mínimo 6 caracteres como solicitado)
   const validatePassword = (password: string): string => {
-    if (password.length < 8) {
-      return 'A senha deve ter no mínimo 8 caracteres';
-    }
-    if (!/[A-Z]/.test(password)) {
-      return 'A senha deve conter pelo menos uma letra maiúscula';
-    }
-    if (!/[a-z]/.test(password)) {
-      return 'A senha deve conter pelo menos uma letra minúscula';
-    }
-    if (!/[0-9]/.test(password)) {
-      return 'A senha deve conter pelo menos um número';
-    }
-    if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
-      return 'A senha deve conter pelo menos um caractere especial (!@#$%^&*()_+-=[]{};\':"\\|,.<>/?)';
+    if (password.length < 6) {
+      return 'A senha deve ter no mínimo 6 caracteres';
     }
     return '';
   };
@@ -286,34 +274,10 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
                     Requisitos da senha:
                   </div>
                   <div style={{ 
-                    color: formData.password.length >= 8 ? '#4a920f' : 'var(--primary-color)', 
-                    opacity: formData.password.length >= 8 ? 1 : 0.6 
+                    color: formData.password.length >= 6 ? '#4a920f' : 'var(--primary-color)', 
+                    opacity: formData.password.length >= 6 ? 1 : 0.6 
                   }}>
-                    {formData.password.length >= 8 ? '✓' : '○'} Mínimo 8 caracteres
-                  </div>
-                  <div style={{ 
-                    color: /[A-Z]/.test(formData.password) ? '#4a920f' : 'var(--primary-color)', 
-                    opacity: /[A-Z]/.test(formData.password) ? 1 : 0.6 
-                  }}>
-                    {/[A-Z]/.test(formData.password) ? '✓' : '○'} Letra maiúscula
-                  </div>
-                  <div style={{ 
-                    color: /[a-z]/.test(formData.password) ? '#4a920f' : 'var(--primary-color)', 
-                    opacity: /[a-z]/.test(formData.password) ? 1 : 0.6 
-                  }}>
-                    {/[a-z]/.test(formData.password) ? '✓' : '○'} Letra minúscula
-                  </div>
-                  <div style={{ 
-                    color: /[0-9]/.test(formData.password) ? '#4a920f' : 'var(--primary-color)', 
-                    opacity: /[0-9]/.test(formData.password) ? 1 : 0.6 
-                  }}>
-                    {/[0-9]/.test(formData.password) ? '✓' : '○'} Número
-                  </div>
-                  <div style={{ 
-                    color: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(formData.password) ? '#4a920f' : 'var(--primary-color)', 
-                    opacity: /[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(formData.password) ? 1 : 0.6 
-                  }}>
-                    {/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(formData.password) ? '✓' : '○'} Caractere especial (!@#$%...)
+                    {formData.password.length >= 6 ? '✓' : '○'} Mínimo 6 caracteres
                   </div>
                 </div>
               )}
@@ -339,52 +303,58 @@ export const LoginScreen: React.FC<LoginScreenProps> = ({ onLogin }) => {
 
             {!isLogin && (
               <>
-                <div className="user-type-selector">
-                  <label>Tipo de Conta:</label>
-                  <div className="type-options">
-                    <button
-                      type="button"
-                      className={`type-option ${userType === 'cidadao' ? 'active' : ''}`}
-                      onClick={() => setUserType('cidadao')}
-                    >
+                {/* Tipo de conta fixado como Cidadão - Admins são criados internamente */}
+                <div className="user-type-info" style={{
+                  padding: '12px 16px',
+                  background: 'linear-gradient(135deg, rgba(194, 33, 105, 0.08), rgba(194, 33, 105, 0.12))',
+                  borderRadius: '8px',
+                  border: '2px solid rgba(194, 33, 105, 0.2)',
+                  marginBottom: '16px'
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                    <div style={{
+                      width: '48px',
+                      height: '48px',
+                      borderRadius: '50%',
+                      background: 'var(--accent-color)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: 'white'
+                    }}>
                       <User size={24} />
-                      <span>Cidadão</span>
-                      <small>Explorar e participar de eventos</small>
-                    </button>
-                    <button
-                      type="button"
-                      className={`type-option ${userType === 'admin' ? 'active' : ''}`}
-                      onClick={() => setUserType('admin')}
-                    >
-                      <UserCog size={24} />
-                      <span>Administrador</span>
-                      <small>Criar e gerenciar eventos</small>
-                    </button>
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <div style={{ fontWeight: '600', color: 'var(--primary-color)', marginBottom: '4px' }}>
+                        Conta de Cidadão
+                      </div>
+                      <div style={{ fontSize: '0.85rem', color: 'var(--primary-color)', opacity: 0.8 }}>
+                        Explore eventos, roteiros turísticos e conecte-se com o Recife
+                      </div>
+                    </div>
                   </div>
                 </div>
 
-                {userType === 'cidadao' && (
-                  <div className="interesses-selector">
-                    <label>Quais eventos você gostaria de receber notificações?</label>
-                    <p className="selector-description">Selecione seus interesses</p>
-                    <div className="interesses-grid-login">
-                      {CATEGORIAS_DISPONIVEIS.map((categoria) => (
-                        <button
-                          key={categoria.id}
-                          type="button"
-                          className={`interesse-chip ${interesses.includes(categoria.id) ? 'selected' : ''}`}
-                          onClick={() => toggleInteresse(categoria.id)}
-                        >
-                          <span className="chip-emoji">{categoria.emoji}</span>
-                          <span className="chip-nome">{categoria.nome}</span>
-                        </button>
-                      ))}
-                    </div>
-                    {interesses.length > 0 && (
-                      <p className="interesses-count">{interesses.length} selecionado{interesses.length > 1 ? 's' : ''}</p>
-                    )}
+                <div className="interesses-selector">
+                  <label>Quais eventos você gostaria de receber notificações?</label>
+                  <p className="selector-description">Selecione seus interesses</p>
+                  <div className="interesses-grid-login">
+                    {CATEGORIAS_DISPONIVEIS.map((categoria) => (
+                      <button
+                        key={categoria.id}
+                        type="button"
+                        className={`interesse-chip ${interesses.includes(categoria.id) ? 'selected' : ''}`}
+                        onClick={() => toggleInteresse(categoria.id)}
+                      >
+                        <span className="chip-emoji">{categoria.emoji}</span>
+                        <span className="chip-nome">{categoria.nome}</span>
+                      </button>
+                    ))}
                   </div>
-                )}
+                  {interesses.length > 0 && (
+                    <p className="interesses-count">{interesses.length} selecionado{interesses.length > 1 ? 's' : ''}</p>
+                  )}
+                </div>
               </>
             )}
 
